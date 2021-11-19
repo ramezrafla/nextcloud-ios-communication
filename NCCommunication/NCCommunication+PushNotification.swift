@@ -27,7 +27,7 @@ import SwiftyJSON
 
 extension NCCommunication {
 
-    @objc public func subscribingPushNotification(serverUrl: String, account: String, user: String, password: String, pushTokenHash: String, devicePublicKey: String, proxyServerUrl: String, customUserAgent: String? = nil, addCustomHeaders: [String: String]? = nil, completionHandler: @escaping (_ account: String, _ deviceIdentifier: String?, _ signature: String?, _ publicKey: String?, _ errorCode: Int, _ errorDescription: String) -> Void) {
+    @objc public func subscribingPushNotification(serverUrl: String, account: String, user: String, password: String, deviceIdentifier: String, devicePublicKey: String, appType: String, customUserAgent: String? = nil, addCustomHeaders: [String: String]? = nil, completionHandler: @escaping (_ account: String, _ signature: String?, _ publicKey: String?, _ errorCode: Int, _ errorDescription: String) -> Void) {
         
         let endpoint = "ocs/v2.php/apps/notifications/api/v2/push?format=json"
         
@@ -39,9 +39,9 @@ extension NCCommunication {
         let method = HTTPMethod(rawValue: "POST")
         
         let parameters = [
-            "pushTokenHash": pushTokenHash,
+            "deviceIdentifier": deviceIdentifier,
             "devicePublicKey": devicePublicKey,
-            "proxyServer": proxyServerUrl,
+            "appType": appType,
         ]
         
         let headers = NCCommunicationCommon.shared.getStandardHeaders(user: user, password: password, appendHeaders: addCustomHeaders, customUserAgent: customUserAgent)
@@ -57,10 +57,9 @@ extension NCCommunication {
                 let json = JSON(json)
                 let statusCode = json["ocs"]["meta"]["statuscode"].int ?? NCCommunicationError().getInternalError()
                 if 200..<300 ~= statusCode  {
-                    let deviceIdentifier = json["ocs"]["data"]["deviceIdentifier"].stringValue
                     let signature = json["ocs"]["data"]["signature"].stringValue
                     let publicKey = json["ocs"]["data"]["publicKey"].stringValue
-                    completionHandler(account, deviceIdentifier, signature, publicKey, 0, "")
+                    completionHandler(account, signature, publicKey, 0, "")
                 } else {
                     let errorDescription = json["ocs"]["meta"]["errorDescription"].string ?? NSLocalizedString("_invalid_data_format_", value: "Invalid data format", comment: "")
                     completionHandler(account, nil, nil, nil, statusCode, errorDescription)
@@ -93,71 +92,6 @@ extension NCCommunication {
                 completionHandler(account, 0, "")
             }
         }
-    }
-    
-    @objc public func subscribingPushProxy(proxyServerUrl: String, pushToken: String, deviceIdentifier: String, signature: String, publicKey: String, userAgent: String, completionHandler: @escaping (_ errorCode: Int, _ errorDescription: String) -> Void) {
-        
-        let endpoint = "devices?format=json"
-        
-        guard let url = NCCommunicationCommon.shared.createStandardUrl(serverUrl: proxyServerUrl, endpoint: endpoint) else {
-            completionHandler(NSURLErrorBadURL, NSLocalizedString("_invalid_url_", value: "Invalid server url", comment: ""))
-            return
-        }
-        
-        let method = HTTPMethod(rawValue: "POST")
-        
-        let parameters = [
-            "pushToken": pushToken,
-            "deviceIdentifier": deviceIdentifier,
-            "deviceIdentifierSignature": signature,
-            "userPublicKey": publicKey
-        ]
-        
-        let headers = HTTPHeaders.init(arrayLiteral: .userAgent(userAgent))
-                
-        sessionManager.request(url, method: method, parameters:parameters, encoding: URLEncoding.default, headers: headers, interceptor: nil).validate(statusCode: 200..<300).response { (response) in
-            debugPrint(response)
-            
-            switch response.result {
-            case .failure(let error):
-                let error = NCCommunicationError().getError(error: error, httResponse: response.response)
-                completionHandler(error.errorCode, error.description ?? "")
-            case .success( _):
-                completionHandler(0, "")
-            }
-        }
-    }
-    
-    @objc public func unsubscribingPushProxy(proxyServerUrl: String, deviceIdentifier: String, signature: String, publicKey: String, userAgent: String, completionHandler: @escaping (_ errorCode: Int, _ errorDescription: String) -> Void) {
-                
-        let endpoint = "devices"
-        
-        guard let url = NCCommunicationCommon.shared.createStandardUrl(serverUrl: proxyServerUrl, endpoint: endpoint) else {
-            completionHandler(NSURLErrorBadURL, NSLocalizedString("_invalid_url_", value: "Invalid server url", comment: ""))
-            return
-        }
-        
-        let method = HTTPMethod(rawValue: "DELETE")
-        
-        let parameters = [
-            "deviceIdentifier": deviceIdentifier,
-            "deviceIdentifierSignature": signature,
-            "userPublicKey": publicKey
-        ]
-        
-        let headers = HTTPHeaders.init(arrayLiteral: .userAgent(userAgent))
-        
-        sessionManager.request(url, method: method, parameters: parameters, encoding: URLEncoding.default, headers: headers, interceptor: nil).validate(statusCode: 200..<300).response { (response) in
-            debugPrint(response)
-            
-            switch response.result {
-            case .failure(let error):
-                let error = NCCommunicationError().getError(error: error, httResponse: response.response)
-                completionHandler(error.errorCode, error.description ?? "")
-            case .success( _):
-                completionHandler(0, "")
-            }
-        }
-    }
+    }    
 }
 
