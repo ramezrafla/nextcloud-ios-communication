@@ -32,7 +32,7 @@ extension NCCommunication {
         let endpoint = "ocs/v2.php/apps/notifications/api/v2/push?format=json"
         
         guard let url = NCCommunicationCommon.shared.createStandardUrl(serverUrl: serverUrl, endpoint: endpoint) else {
-            completionHandler(account, nil, nil, nil, NSURLErrorBadURL, NSLocalizedString("_invalid_url_", value: "Invalid server url", comment: ""))
+            completionHandler(account, nil, nil, NSURLErrorBadURL, NSLocalizedString("_invalid_url_", value: "Invalid server url", comment: ""))
             return
         }
         
@@ -52,7 +52,7 @@ extension NCCommunication {
             switch response.result {
             case .failure(let error):
                 let error = NCCommunicationError().getError(error: error, httResponse: response.response)
-                completionHandler(account, nil, nil, nil, error.errorCode, error.description ?? "")
+                completionHandler(account, nil, nil, error.errorCode, error.description ?? "")
             case .success(let json):
                 let json = JSON(json)
                 let statusCode = json["ocs"]["meta"]["statuscode"].int ?? NCCommunicationError().getInternalError()
@@ -62,7 +62,7 @@ extension NCCommunication {
                     completionHandler(account, signature, publicKey, 0, "")
                 } else {
                     let errorDescription = json["ocs"]["meta"]["errorDescription"].string ?? NSLocalizedString("_invalid_data_format_", value: "Invalid data format", comment: "")
-                    completionHandler(account, nil, nil, nil, statusCode, errorDescription)
+                    completionHandler(account, nil, nil, statusCode, errorDescription)
                 }
             }
         }
