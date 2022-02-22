@@ -32,7 +32,7 @@ extension NCCommunication {
         let endpoint = "ocs/v2.php/apps/notifications/api/v2/push?format=json"
         
         guard let url = NCCommunicationCommon.shared.createStandardUrl(serverUrl: serverUrl, endpoint: endpoint) else {
-            queue.async { completionHandler(account, nil, nil, nil, NSURLErrorBadURL, NSLocalizedString("_invalid_url_", value: "Invalid server url", comment: "")) }
+            queue.async { completionHandler(account, nil, nil, NSURLErrorBadURL, NSLocalizedString("_invalid_url_", value: "Invalid server url", comment: "")) }
             return
         }
         
@@ -52,17 +52,17 @@ extension NCCommunication {
             switch response.result {
             case .failure(let error):
                 let error = NCCommunicationError().getError(error: error, httResponse: response.response)
-                queue.async { completionHandler(account, nil, nil, nil, error.errorCode, error.description ?? "") }
+                queue.async { completionHandler(account, nil, nil, error.errorCode, error.description ?? "") }
             case .success(let json):
                 let json = JSON(json)
                 let statusCode = json["ocs"]["meta"]["statuscode"].int ?? NCCommunicationError().getInternalError()
                 if 200..<300 ~= statusCode  {
                     let signature = json["ocs"]["data"]["signature"].stringValue
                     let publicKey = json["ocs"]["data"]["publicKey"].stringValue
-                    queue.async { completionHandler(account, deviceIdentifier, signature, publicKey, 0, "") }
+                    queue.async { completionHandler(account, signature, publicKey, 0, "") }
                 } else {
                     let errorDescription = json["ocs"]["meta"]["errorDescription"].string ?? NSLocalizedString("_invalid_data_format_", value: "Invalid data format", comment: "")
-                    queue.async { completionHandler(account, nil, nil, nil, statusCode, errorDescription) }
+                    queue.async { completionHandler(account, nil, nil, statusCode, errorDescription) }
                 }
             }
         }
