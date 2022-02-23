@@ -27,7 +27,7 @@ import SwiftyJSON
 
 extension NCCommunication {
 
-    @objc public func subscribingPushNotification(serverUrl: String, account: String, user: String, password: String, deviceIdentifier: String, devicePublicKey: String, appType: String, customUserAgent: String? = nil, addCustomHeaders: [String: String]? = nil, completionHandler: @escaping (_ account: String, _ signature: String?, _ publicKey: String?, _ errorCode: Int, _ errorDescription: String) -> Void) {
+    @objc public func subscribingPushNotification(serverUrl: String, account: String, user: String, password: String, deviceIdentifier: String, devicePublicKey: String, appType: String, customUserAgent: String? = nil, addCustomHeaders: [String: String]? = nil, queue: DispatchQueue = .main, completionHandler: @escaping (_ account: String, _ signature: String?, _ publicKey: String?, _ errorCode: Int, _ errorDescription: String) -> Void) {
         
         let endpoint = "ocs/v2.php/apps/notifications/api/v2/push?format=json"
         
